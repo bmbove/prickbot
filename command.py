@@ -4,6 +4,30 @@ import HTMLParser
 import random
 
 
+class PluginBase(object):
+
+    name = "Plugin Base"
+    description = "IRC Bot Base Plugin Class"
+    available_cmds = {}
+
+    def run(self, *args, **kwargs):
+        # [[irc_command, message]]
+        return [[None, None]]
+
+
+class Quote(PluginBase):
+    name = "Quote"
+    description = "Returns a random quote from iheartquotes.com"
+    available_cmds = {'quote': 'Returns a quote'}
+
+    def run(self):
+        url = 'http://iheartquotes.com/api/v1/random?'
+        url += 'max_lines=1&source=south_park'
+        req = urllib2.Request(url)
+        response = urllib2.urlopen(req)
+        return [['say', response.readline().strip()]]
+
+
 class BasicCmd():
 
     def __init__(self):

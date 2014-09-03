@@ -9,21 +9,26 @@ import urllib2
 import HTMLParser
 
 
-class IRCBot():
+class IRCBot(Thread):
+
+    reconnect = False
+    sock = False
+    connected = False
+    joined = False
+    channels = []
+    rate_limit = 10
+    bot_nick = "prickbot"
 
     def __init__(self, server, port, *args, **kwargs):
-        self.reconnect = False
-        self.sock = False
         self.server = server
         self.port = port
-        #self.botqueue = botqueue
-        self.connected = False
-        self.joined = False
-        self.bot_nick = "prickbot_n"
-        self.channels = []
         self.send_q = Queue()
         if "channels" in kwargs:
             self.channels = kwargs['channels']
+        if "bot_nick" in kwargs:
+            self.bot_nick = kwargs["bot_nick"]
+        if "rate_limit" in kwargs:
+            self.rate_limit = kwargs["rate_limit"]
 
     def connect(self):
 
@@ -85,6 +90,7 @@ class IRCBot():
             if message != "":
                 parser = IRCParse(self.send_q, message, self.bot_nick)
                 parser.start()
+        exit(0)
 
 
 
