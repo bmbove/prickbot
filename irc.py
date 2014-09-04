@@ -168,7 +168,10 @@ class IRCBot(IRCBase, Thread):
         pass
 
     def sock_write(self, to_send):
-        to_send = to_send.encode('utf-8')
+        try: 
+            to_send = to_send.encode('utf-8')
+        except:
+            pass 
         print(to_send)
         self.sock.send(to_send + "\r\n")
 
