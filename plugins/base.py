@@ -66,6 +66,7 @@ class Basics(ChatCmd):
         title = title.replace("\n", "")
         title = title.replace("\r", "")
         title = title.replace("\t", "    ")
+        title = title.decode('utf-8')
         title_s = "Title: %s" % h.unescape(title)
         return [['say', self.channel, title_s]]
 

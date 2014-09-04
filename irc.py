@@ -169,14 +169,10 @@ class IRCBot(IRCBase, Thread):
 
     def sock_write(self, to_send):
 
-        try: 
-            to_send = to_send.decode('utf-8')
-        except:
-            to_send = to_send.decode('ascii')
+        to_send = to_send.encode('utf-8', errors='ignore')
 
-        #to_send.encode('ascii')
         print(to_send)
-        self.sock.send(to_send + "\r\n".decode('ascii'))
+        self.sock.send("%s\r\n" % to_send)
 
     def sendq_handle(self, msg):
         cmds = {'say': self.say,
