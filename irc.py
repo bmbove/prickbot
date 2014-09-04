@@ -4,7 +4,7 @@ import re
 import traceback
 from threading import Thread, Event
 from Queue import Queue
-from plugins import *
+import plugins
 
 class IRCBase(object):
 
@@ -187,7 +187,7 @@ class IRCBot(IRCBase, Thread):
             return True
 
         # If channels are passed in the init, join them now
-        if "/MOTD" in msg and self.joined is False:
+        if "MOTD" in msg and self.joined is False:
             for channel in self.channels:
                 self.sendq.put(['join', channel])
             self.joined = True

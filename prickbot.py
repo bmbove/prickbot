@@ -4,7 +4,7 @@ from irc import IRCBot
 ttl = False
 
 channels = ["#pricktest"]
-bot = IRCBot('irc.freenode.net',
+bot = IRCBot('irc.gamesurge.net',
                 6667,
                 channels=channels,
                 bot_nick='prick_new'
