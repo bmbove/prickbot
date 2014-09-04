@@ -14,7 +14,10 @@ class ChatCmd(object):
             self.channel = kwargs['channel']
 
     def run(self, nick, cmd, msg):
-        return self.avail_cmds[cmd](nick, msg)
+        self.cmd = cmd
+        self.nick = nick
+        self.msg = msg
+        return self.avail_cmds[cmd](msg)
 
     def grab_page(self, url):
 
@@ -39,10 +42,10 @@ class Basics(ChatCmd):
         }
         super(Basics, self).__init__(self, *args, **kwargs)
 
-    def repeat(self, nick, msg):
+    def repeat(self, msg):
         return [['say',self.channel, msg]] 
 
-    def grab_title(self, nick, url):
+    def grab_title(self, url):
 
         if url[0:7] != "http://" and url[0:8] != "https://":
             url = "http://" + url
@@ -59,11 +62,14 @@ class Basics(ChatCmd):
         title_s = "Title: %s" % h.unescape(title)
         return [['say', self.channel, title_s]]
 
-    def chanjoin(self, nick, channel):
-        return [['join', channel]]
+    def chanjoin(self, channel):
+        if channel[0:1] == "#":
+            return [['join', channel]]
+        else:
+            return [['say', self.channel, 'Invalid channel name']]
 
-    def chanpart(self, nick, channel):
+    def chanpart(self, channel):
         return [['part', channel]]
 
-    def servquit(self, nick, msg):
+    def servquit(self, msg):
         return [['quit']]

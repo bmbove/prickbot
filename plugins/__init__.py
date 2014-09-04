@@ -24,10 +24,11 @@ for lib in lib_list:
     mod_list = dir(lib)
     for method in mod_list:
         to_import = __import__(lib.__name__, globals(), locals(), [method], -1)
-        if inspect.isclass(getattr(to_import, method)):
-            if issubclass(getattr(to_import, method), ChatCmd):
+        cls = getattr(to_import, method)
+        if inspect.isclass(cls):
+            if issubclass(cls, ChatCmd) and cls != ChatCmd:
                 print "Importing " + to_import.__name__ + "." + method
-                routines.append(getattr(to_import, method))
+                routines.append(cls)
 
 avail_cmds = {}
 for classobj in routines:

@@ -72,6 +72,7 @@ class IRCBot(IRCBase, Thread):
             time.sleep(30)
 
         self.sock = socket.socket()
+        self.sock.settimeout(20.0)
 
         connected = False
 
