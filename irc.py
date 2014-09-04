@@ -227,14 +227,14 @@ class IRCBot(IRCBase, Thread):
 
 class IRCParse(IRCBase, Thread):
 
-
     def __init__(self, channel, chanq, sendq, *args, **kwargs):
         self._stop = Event()
         self.channel = channel
         self.chanq = chanq
         self.sendq = sendq 
-        # start up instance of basic commands
-        #self.basic = BasicCmd()
+        self.commands = {}
+        for key, command in plugins.avail_cmds.iteritems():
+            self.commands[key] = command(self.channel)
         super(IRCParse, self).__init__()
 
 
@@ -260,8 +260,40 @@ class IRCParse(IRCBase, Thread):
         m = self.parse_irc(self.message)
 
         if m:
-            message_dict = m.groupdict()
-            return [['say', self.channel, message_dict['message']]]
+            msg_d = m.groupdict()
+            if msg_d['message'][0:1] == "!":
+                msg_split = msg_d['message'].split(' ')
+                command = msg_split[0][1:]
+                params = msg_d['message'][len(command)+2:]
+                if command in self.commands:
+                    try:
+                        return self.commands[command].run(
+                            msg_d['nick'],
+                            command,
+                            params
+                        )
+                    except Exception, e:
+                        print traceback.format_exc()
+                        print e
+                        return False
+            else:
+                url = self.url_matcher(msg_d['message'])
+                title = self.commands['title'].grab_title(url)
+                cmd = ['say', self.channel, title]
+                return [cmd]
+        else:
+            return False
+
+    def url_matcher(self, message):
+        re_str = (""
+                  "(?:https?://|www\.)"
+                  "[\w\-\@;\/?:&=%\$_.+!*\x27(),~#]+"
+                  "[\w\-\@;\/?&=%\$_+!*\x27()~]"
+                  )
+        p = re.compile(re_str)
+        m = p.search(message)
+        if m:
+            return m.group()
         else:
             return False
 

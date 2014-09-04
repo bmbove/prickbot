@@ -51,3 +51,9 @@ for lib in lib_list:
             if issubclass(getattr(to_import, method), ChatCmd):
                 print "Importing " + to_import.__name__ + "." + method
                 routines.append(getattr(to_import, method))
+
+avail_cmds = {}
+for classobj in routines:
+    command_list = classobj(None).avail_cmds
+    for command in command_list:
+        avail_cmds[command] = classobj

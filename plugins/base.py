@@ -7,7 +7,10 @@ class ChatCmd(object):
     
     name = "Command"
     desc = "An IRC Bot sub-routine"
-    avail_cmds = {}
+    avail_cmds = ['title']
+
+    def __init__(self, channel):
+        self.channel = channel
 
     def grab_page(self, url):
 
@@ -36,6 +39,13 @@ class ChatCmd(object):
         title_s = "Title: %s" % h.unescape(title)
         return title_s
 
+
+class Repeat(ChatCmd):
+
+    avail_cmds = ['repeat']
+
+    def run(self, nick, cmd, msg):
+        return [['say',self.channel, msg]] 
 
 class BasicCmd():
 
