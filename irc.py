@@ -174,9 +174,9 @@ class IRCBot(IRCBase, Thread):
         except:
             to_send = to_send.decode('ascii')
 
-        to_send.encode('ascii')
+        #to_send.encode('ascii')
         print(to_send)
-        self.sock.send(to_send + "\r\n")
+        self.sock.send(to_send + "\r\n".decode('ascii'))
 
     def sendq_handle(self, msg):
         cmds = {'say': self.say,
