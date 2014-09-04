@@ -168,7 +168,7 @@ class IRCBot(IRCBase, Thread):
         pass
 
     def sock_write(self, to_send):
-        decoded = u''.join(c for c in to_send if ord(c) <= 10FFFF)
+
         to_send = to_send.encode('utf-8', errors='ignore')
 
         print(to_send)
