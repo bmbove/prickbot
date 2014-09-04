@@ -1,33 +1,27 @@
-from Queue import Queue
-from irc import IRCBot, IRCParse
+from irc import IRCBot
 
-writeq = Queue()
-readq = Queue()
 ttl = False
 
+channels = ["#pricktest"]
+bot = IRCBot('irc.freenode.net',
+                6667,
+                channels=channels,
+                bot_nick='prick_new'
+                )
 
 def main():
-    global writeq, readq
-    channels = ["#pricktest"]
-    bot = IRCBot('irc.freenode.net',
-                 6667,
-                 readq,
-                 writeq,
-                 channels=channels)
+    global bot, ttl
     bot.start()
-
-    parser = IRCParse(readq, writeq)
-    parser.start()
 
     while not ttl:
         pass
+
     exit(0)
 
 if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        writeq.put(["quit"])
+        bot.stop()
         ttl = True
-        raise
         exit(0)
