@@ -12,6 +12,13 @@ class ChatCmd(object):
     def __init__(self, *args, **kwargs):
         if 'channel' in kwargs:
             self.channel = kwargs['channel']
+        else:
+            self.channel = ''
+
+        if 'bot_nick' in kwargs:
+            self.bot_nick = kwargs['bot_nick']
+        else:
+            self.bot_nick = ''
 
     def run(self, nick, cmd, msg):
         self.cmd = cmd

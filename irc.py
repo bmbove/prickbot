@@ -61,6 +61,7 @@ class IRCBot(IRCBase, Thread):
         super(IRCBot, self).__init__()
 
     def connect(self):
+
         if self.sock:
             self.sock.close()
 
@@ -76,14 +77,14 @@ class IRCBot(IRCBase, Thread):
 
         connected = False
 
-        while not connected:
-            try:
-                self.sock.connect((self.server, self.port))
-                connected = True
-            except Exception, e:
-                print traceback.format_exc()
-                print e
-                connected = False
+        try:
+            self.sock.connect((self.server, self.port))
+            connected = True
+        except Exception, e:
+            print traceback.format_exc()
+            print e
+            self.reconnect = True
+            return False
 
         self.sock_write(
             "USER %s blah.net * :%s" % (self.bot_nick, self.bot_nick)
@@ -93,6 +94,7 @@ class IRCBot(IRCBase, Thread):
         # timeout for cpu purposes
         self.sock.settimeout(0.1)
         self.connected = connected
+        return True
 
     def run(self):
         while not self.stopped():
@@ -114,9 +116,10 @@ class IRCBot(IRCBase, Thread):
                     break
 
             if message != "":
+                message = message.strip()
                 if(self.msg_handle(message)):
                     self.sock.settimeout(0.0)
-                print(message.strip())
+                print(message)
 
         for channel in self.chan_qs:
             self.destroy_thread(channel)
@@ -227,7 +230,7 @@ class IRCBot(IRCBase, Thread):
         if channel in self.chan_qs:
             self.destory_thread(channel)
         chanq = Queue()
-        parse_thread = IRCParse(channel, chanq, self.sendq)
+        parse_thread = IRCParse(channel, self.bot_nick, chanq, self.sendq)
         parse_thread.start()
         self.chan_qs[channel] = [chanq, parse_thread]
 
@@ -243,14 +246,26 @@ class IRCBot(IRCBase, Thread):
 
 class IRCParse(IRCBase, Thread):
 
-    def __init__(self, channel, chanq, sendq, *args, **kwargs):
+    def __init__(self, channel, bot_nick, chanq, sendq, *args, **kwargs):
         self._stop = Event()
         self.channel = channel
         self.chanq = chanq
         self.sendq = sendq 
+        self.bot_nick = bot_nick
         self.commands = {}
-        for key, command in plugins.avail_cmds.iteritems():
-            self.commands[key] = command(channel=self.channel)
+        for cmdtxt, classname in plugins.avail_cmds.iteritems():
+            found = False
+            for cmd in self.commands:
+                classobj = self.commands[cmd]
+                if isinstance(classobj, classname):
+                    found = classobj
+            if not found:
+                self.commands[cmdtxt] = classname(
+                    channel=self.channel,
+                    bot_nick=self.bot_nick
+                )
+            else:
+                self.commands[cmdtxt] = found
         super(IRCParse, self).__init__()
 
     def run(self):
@@ -265,7 +280,11 @@ class IRCParse(IRCBase, Thread):
                 # if we were clever enough, write reply to server
                 if reply:
                     for cmd in reply:
-                        self.sendq.put(cmd)
+                        if cmd[0] == 'delay':
+                            # sleep here instead of main thread
+                            time.sleep(cmd[1])
+                        else:
+                            self.sendq.put(cmd)
                 else:
                     self.sendq.put(['del'])
             except Exception, e:

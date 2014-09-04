@@ -2,8 +2,8 @@
 import time
 from irc import IRCBot
 
-channels = ["#pricktest"]
-bot = IRCBot('irc.gamesurge.net',
+channels = ["#pricknew"]
+bot = IRCBot('irc.freenode.net',
                 6667,
                 channels=channels,
                 bot_nick='prick_new'
