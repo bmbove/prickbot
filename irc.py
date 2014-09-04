@@ -2,11 +2,9 @@ import socket
 import time
 import re
 import traceback
-from threading import Thread
-from threading import Event
+from threading import Thread, Event
 from Queue import Queue
-from command import BasicCmd
-# from plugins import *
+from plugins import *
 
 class IRCBase(object):
 
@@ -30,6 +28,7 @@ class IRCBase(object):
 
         return m
 
+
 class IRCBot(IRCBase, Thread):
 
     # ["join", channel_name]
@@ -38,7 +37,7 @@ class IRCBot(IRCBase, Thread):
     # ["topic", channel_name, new_topic]
     # ["say", channel/nick, message]
     # ["who", channel/nick]
-    # ["raw", command] (no \r\n is needed on the end of the command
+    # ["raw", command]
 
     connected = False
     reconnect = False
@@ -71,23 +70,26 @@ class IRCBot(IRCBase, Thread):
             self.joined = False
             time.sleep(30)
 
-        s = socket.socket()
+        self.sock = socket.socket()
+
         connected = False
 
         while not connected:
             try:
-                s.connect((self.server, self.port))
+                self.sock.connect((self.server, self.port))
                 connected = True
             except Exception, e:
                 print traceback.format_exc()
                 print e
                 connected = False
 
-        s.send("USER %s blah.net * :%s\r\n" % (self.bot_nick, self.bot_nick))
-        s.send("NICK %s\r\n" % self.bot_nick)
+        self.sock_write(
+            "USER %s blah.net * :%s\r\n" %
+            (self.bot_nick, self.bot_nick)
+        )
+        self.sock_write("NICK %s\r\n" % self.bot_nick)
 
-        s.settimeout(0.0)
-        self.sock = s
+        self.sock.settimeout(0.0)
         self.connected = connected
 
     def run(self):
@@ -114,7 +116,7 @@ class IRCBot(IRCBase, Thread):
                 print(message.strip())
 
         for channel in self.chan_qs:
-            self.chan_qs[channel][1].stop()
+            self.destroy_thread(channel)
         self.quit_irc()
         exit(0)
 
@@ -178,22 +180,28 @@ class IRCBot(IRCBase, Thread):
 
     def msg_handle(self, msg):
 
-        # Check for Ping- response with Pong and note the time
+        # Check for Ping- respond with Pong and note the time
         message_list = msg.split(" ")
         if message_list[0] == "PING":
             self.sendq.put(['raw', "PONG %s" % message_list[1]])
+            return True
 
         # If channels are passed in the init, join them now
         if "/MOTD" in msg and self.joined is False:
             for channel in self.channels:
                 self.sendq.put(['join', channel])
             self.joined = True
+            return True
 
         m = self.parse_irc(msg)
 
         if m:
             message_dict = m.groupdict()
-
+            # check if we have a parser thread
+            # going for the channel/PM
+            # and direct everything accordingly
+            if message_dict['nick'] == self.bot_nick:
+                return False
             if message_dict['entity'][0:1] == '#':
                 channel = message_dict['entity']
             else:
@@ -219,16 +227,12 @@ class IRCBot(IRCBase, Thread):
 
 class IRCParse(IRCBase, Thread):
 
-    bot_nick = "prickbot"
 
     def __init__(self, channel, chanq, sendq, *args, **kwargs):
         self._stop = Event()
         self.channel = channel
         self.chanq = chanq
         self.sendq = sendq 
-        # bot nickname
-        if 'bot_nick' in kwargs:
-            self.bot_nick = kwargs['bot_nick']
         # start up instance of basic commands
         #self.basic = BasicCmd()
         super(IRCParse, self).__init__()
@@ -257,10 +261,7 @@ class IRCParse(IRCBase, Thread):
 
         if m:
             message_dict = m.groupdict()
-            if self.bot_nick in message_dict['nick']:
-                return False
-            else:
-                return [['say', self.channel, message_dict['message']]]
+            return [['say', self.channel, message_dict['message']]]
         else:
             return False
 
