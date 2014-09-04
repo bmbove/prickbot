@@ -1,7 +1,6 @@
 #!/usr/bin/python2
+import time
 from irc import IRCBot
-
-ttl = False
 
 channels = ["#pricktest"]
 bot = IRCBot('irc.gamesurge.net',
@@ -15,7 +14,7 @@ def main():
     bot.start()
 
     while bot.isAlive():
-        pass
+        time.sleep(3)
 
 if __name__ == '__main__':
     try:

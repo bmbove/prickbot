@@ -89,7 +89,8 @@ class IRCBot(IRCBase, Thread):
         )
         self.sock_write("NICK %s\r\n" % self.bot_nick)
 
-        self.sock.settimeout(0.0)
+        # timeout for cpu purposes
+        self.sock.settimeout(0.1)
         self.connected = connected
 
     def run(self):
@@ -99,10 +100,12 @@ class IRCBot(IRCBase, Thread):
 
             message = ""
 
-            if not self.sendq.empty():
+            while not self.sendq.empty():
+            #if not self.sendq.empty():
                 self.sendq_handle(self.sendq.get())
                 self.sendq.task_done()
-                to_send = None
+                self.sock.settimeout(0.1)
+
 
             # Grab 1 byte at a time until a full message is in the buffer
             while "\r\n" not in message:
@@ -112,7 +115,8 @@ class IRCBot(IRCBase, Thread):
                     break
 
             if message != "":
-                self.msg_handle(message)
+                if(self.msg_handle(message)):
+                    self.sock.settimeout(0.0)
                 print(message.strip())
 
         for channel in self.chan_qs:
@@ -158,6 +162,9 @@ class IRCBot(IRCBase, Thread):
     def raw_send(self, msg):
         self.sock_write(msg[1])
 
+    def discard(self, msg):
+        pass
+
     def sock_write(self, to_send):
         to_send = to_send.encode('utf-8')
         print(to_send)
@@ -171,6 +178,7 @@ class IRCBot(IRCBase, Thread):
                 'who': self.who_list,
                 'quit': self.quit_irc,
                 'raw': self.raw_send,
+                'del': self.discard,
                 }
         try:
             if msg[0] in cmds:
@@ -212,6 +220,9 @@ class IRCBot(IRCBase, Thread):
                 self.create_thread(channel)
 
             self.chan_qs[channel][0].put(msg)
+            return True 
+        else:
+            return False
 
     def create_thread(self, channel):
         if channel in self.chan_qs:
@@ -240,7 +251,7 @@ class IRCParse(IRCBase, Thread):
         self.sendq = sendq 
         self.commands = {}
         for key, command in plugins.avail_cmds.iteritems():
-            self.commands[key] = command(self.channel)
+            self.commands[key] = command(channel=self.channel)
         super(IRCParse, self).__init__()
 
 
@@ -257,6 +268,8 @@ class IRCParse(IRCBase, Thread):
                 if reply:
                     for cmd in reply:
                         self.sendq.put(cmd)
+                else:
+                    self.sendq.put(['del'])
             except Exception, e:
                 print traceback.format_exc()
                 print e

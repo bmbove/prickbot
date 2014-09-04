@@ -1,16 +1,20 @@
 import urllib2
 import re
 import HTMLParser
-import random
+
 
 class ChatCmd(object):
     
     name = "Command"
     desc = "An IRC Bot sub-routine"
-    avail_cmds = []
+    avail_cmds = {}
 
-    def __init__(self, channel):
-        self.channel = channel
+    def __init__(self, *args, **kwargs):
+        if 'channel' in kwargs:
+            self.channel = kwargs['channel']
+
+    def run(self, nick, cmd, msg):
+        return self.avail_cmds[cmd](nick, msg)
 
     def grab_page(self, url):
 
@@ -23,31 +27,22 @@ class ChatCmd(object):
         return response.read()
 
 
-
 class Basics(ChatCmd):
 
-    avail_cmds = [
-        'repeat',
-        'title',
-        'join',
-        'quit',
-        'leave',
-    ]
-
-    def run(self, nick, cmd, msg):
-        return {
+    def __init__(self, *args, **kwargs):
+        self.avail_cmds = {
             'repeat': self.repeat,
             'title': self.grab_title,
             'join': self.chanjoin,
             'quit': self.servquit,
             'leave': self.chanpart,
-        }[cmd](msg)
+        }
+        super(Basics, self).__init__(self, *args, **kwargs)
 
-
-    def repeat(self, msg):
+    def repeat(self, nick, msg):
         return [['say',self.channel, msg]] 
 
-    def grab_title(self, url):
+    def grab_title(self, nick, url):
 
         if url[0:7] != "http://" and url[0:8] != "https://":
             url = "http://" + url
@@ -64,11 +59,11 @@ class Basics(ChatCmd):
         title_s = "Title: %s" % h.unescape(title)
         return [['say', self.channel, title_s]]
 
-    def chanjoin(self, channel):
+    def chanjoin(self, nick, channel):
         return [['join', channel]]
 
-    def chanpart(self, channel):
+    def chanpart(self, nick, channel):
         return [['part', channel]]
 
-    def servquit(self, msg):
+    def servquit(self, nick, msg):
         return [['quit']]
