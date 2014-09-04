@@ -85,10 +85,9 @@ class IRCBot(IRCBase, Thread):
                 connected = False
 
         self.sock_write(
-            "USER %s blah.net * :%s\r\n" %
-            (self.bot_nick, self.bot_nick)
+            "USER %s blah.net * :%s" % (self.bot_nick, self.bot_nick)
         )
-        self.sock_write("NICK %s\r\n" % self.bot_nick)
+        self.sock_write("NICK %s" % self.bot_nick)
 
         # timeout for cpu purposes
         self.sock.settimeout(0.1)
