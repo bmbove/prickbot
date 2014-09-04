@@ -117,7 +117,8 @@ class IRCBot(IRCBase, Thread):
 
         for channel in self.chan_qs:
             self.destroy_thread(channel)
-        self.quit_irc()
+        self.quit_irc(None)
+        self.sock.close()
         exit(0)
 
     def channel_join(self, msg):
@@ -150,7 +151,7 @@ class IRCBot(IRCBase, Thread):
         message = msg[2]
         self.sock_write("PRIVMSG %s :%s" % (entity, message))
 
-    def quit_irc(self):
+    def quit_irc(self, msg):
         self.sock_write("QUIT :I'll be back") 
         self.stop()
 
@@ -158,6 +159,7 @@ class IRCBot(IRCBase, Thread):
         self.sock_write(msg[1])
 
     def sock_write(self, to_send):
+        to_send = to_send.encode('utf-8')
         print(to_send)
         self.sock.send(to_send + "\r\n")
 
@@ -221,8 +223,12 @@ class IRCBot(IRCBase, Thread):
 
     def destroy_thread(self, channel):
         if channel in self.chan_qs:
-            self.chan_qs[channel][1].stop()
-            del self.chan_qs[channel]
+            try:
+                self.chan_qs[channel][1].stop()
+                del self.chan_qs[channel][1]
+                del self.chan_qs[channel][0]
+            except:
+                pass
 
 
 class IRCParse(IRCBase, Thread):
@@ -278,9 +284,12 @@ class IRCParse(IRCBase, Thread):
                         return False
             else:
                 url = self.url_matcher(msg_d['message'])
-                title = self.commands['title'].grab_title(url)
-                cmd = ['say', self.channel, title]
-                return [cmd]
+                if url:
+                    return self.commands['title'].run(
+                        msg_d['nick'],
+                        'title',
+                        url
+                    )
         else:
             return False
 

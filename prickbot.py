@@ -11,18 +11,15 @@ bot = IRCBot('irc.gamesurge.net',
                 )
 
 def main():
-    global bot, ttl
+    global bot
     bot.start()
 
-    while not ttl:
+    while bot.isAlive():
         pass
-
-    exit(0)
 
 if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
         bot.stop()
-        ttl = True
         exit(0)
