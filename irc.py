@@ -6,6 +6,7 @@ from threading import Thread, Event
 from Queue import Queue
 import plugins
 
+
 class IRCBase(object):
 
     daemon = True
@@ -101,11 +102,9 @@ class IRCBot(IRCBase, Thread):
             message = ""
 
             while not self.sendq.empty():
-            #if not self.sendq.empty():
                 self.sendq_handle(self.sendq.get())
                 self.sendq.task_done()
                 self.sock.settimeout(0.1)
-
 
             # Grab 1 byte at a time until a full message is in the buffer
             while "\r\n" not in message:
@@ -254,7 +253,6 @@ class IRCParse(IRCBase, Thread):
             self.commands[key] = command(channel=self.channel)
         super(IRCParse, self).__init__()
 
-
     def run(self):
         while not self.stopped():
             try:
@@ -318,67 +316,3 @@ class IRCParse(IRCBase, Thread):
             return m.group()
         else:
             return False
-
-    #def parse_msg(self):
-
-        ## regex match various parts of message
-        #re_str = (""
-                  #"^:(?P<nick>(\S*))!~(?P<user>(\S*))@(?P<host>(\S*)) "
-                  #"(?P<command>([A-Z+])*) (?P<entity>([&#-_A-z0-9]+)?) "
-                  #":?(?P<message>(.+)?$)"
-                  #)
-        #p = re.compile(re_str)
-        #m = p.match(self.msg)
-
-        #if m:
-            #msg_array = m.groupdict()
-            #self.msg_array = msg_array
-            #if self.bot_nick in msg_array['nick']:
-                #return False
-            #elif msg_array['message'][0:1] == "!":
-                #msg_split = msg_array['message'].split(' ')
-                #command = msg_split[0][1:]
-                #self.msg_array['param_str'] = ''
-                #self.msg_array['param_l'] = []
-                #for i in range(1, len(msg_split)):
-                    #self.msg_array['param_str'] += msg_split[i] + " "
-                    #self.msg_array['param_l'].append(msg_split[i])
-                #return self.interpret_command(command)
-            #elif self.url_matcher():
-                #url = self.url_matcher()
-                #title = self.basic.grab_title(url)
-                #cmd = ['say', msg_array['entity'], title]
-                #return [cmd]
-            #else:
-                #return False
-        #else:
-            #return False
-
-    #def interpret_command(self, command):
-        #try:
-            #cmd_list = {}
-            #basic_list = self.basic.avail_cmds
-
-            #for key, value in basic_list.iteritems():
-                #cmd_list[key] = value[0]
-            #if command in cmd_list:
-                #response = self.basic.run(self.msg_array, command)
-                #return response
-        #except Exception, e:
-            #print traceback.format_exc()
-            #print e
-            #return [['say', self.msg_array['entity'], e]]
-
-    #def url_matcher(self):
-        #message = self.msg_array['message']
-        #re_str = (""
-                  #"(?:https?://|www\.)"
-                  #"[\w\-\@;\/?:&=%\$_.+!*\x27(),~#]+"
-                  #"[\w\-\@;\/?&=%\$_+!*\x27()~]"
-                  #)
-        #p = re.compile(re_str)
-        #m = p.search(message)
-        #if m:
-            #return m.group()
-        #else:
-            #return False
