@@ -1,3 +1,4 @@
+#!/usr/bin/python2
 from irc import IRCBot
 
 ttl = False
