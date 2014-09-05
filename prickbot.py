@@ -1,6 +1,9 @@
 #!/usr/bin/python2
 import time
-from irc import IRCBot
+import sys
+sys.path.append("./")
+
+from irc.bot import IRCBot
 
 channels = ["#pricknew"]
 bot = IRCBot('irc.freenode.net',

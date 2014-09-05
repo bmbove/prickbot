@@ -4,7 +4,8 @@ import re
 import traceback
 from threading import Thread, Event
 from Queue import Queue
-import plugins
+from plugins import avail_cmds
+from plugins.base import ChatThread
 
 
 class IRCBase(object):
@@ -255,17 +256,37 @@ class IRCParse(IRCBase, Thread):
         self.sendq = sendq 
         self.bot_nick = bot_nick
         self.commands = {}
-        for cmdtxt, classname in plugins.avail_cmds.iteritems():
+        self.q_list = []
+        # look through all the commands and the associated
+        # classes
+        for cmdtxt, classname in avail_cmds.iteritems():
             found = False
+            # see if we've already got an instance of
+            # the class
             for cmd in self.commands:
                 classobj = self.commands[cmd]
                 if isinstance(classobj, classname):
                     found = classobj
+            #print classname
+            # if we didn't find an existing instance,
+            # create a new one
             if not found:
-                self.commands[cmdtxt] = classname(
-                    channel=self.channel,
-                    bot_nick=self.bot_nick
-                )
+                if issubclass(classname, ChatThread):
+                    recvq= Queue()
+                    self.q_list.append(recvq)
+                    classname(
+                        recvq,
+                        sendq,
+                        channel=self.channel,
+                        bot_nick=self.bot_nick
+                    ).start()
+                else:
+                    self.commands[cmdtxt] = classname(
+                        channel=self.channel,
+                        bot_nick=self.bot_nick
+                    )
+            # otherwise, associate this command
+            # with the already-existing instance
             else:
                 self.commands[cmdtxt] = found
         super(IRCParse, self).__init__()
@@ -315,25 +336,8 @@ class IRCParse(IRCBase, Thread):
                         print e
                         return False
             else:
-                url = self.url_matcher(msg_d['message'])
-                if url:
-                    return self.commands['title'].run(
-                        msg_d['nick'],
-                        'title',
-                        url
-                    )
-        else:
-            return False
-
-    def url_matcher(self, message):
-        re_str = (""
-                  "(?:https?://|www\.)"
-                  "[\w\-\@;\/?:&=%\$_.+!*\x27(),~#]+"
-                  "[\w\-\@;\/?&=%\$_+!*\x27()~]"
-                  )
-        p = re.compile(re_str)
-        m = p.search(message)
-        if m:
-            return m.group()
+                for modq in self.q_list:
+                    modq.put(msg_d['message'])
+                    return False
         else:
             return False

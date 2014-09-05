@@ -1,6 +1,12 @@
 import urllib2
 import re
-import HTMLParser
+import time
+import string
+import sys
+import random
+import traceback
+from threading import Thread, Event
+from Queue import Queue
 
 
 class ChatCmd(object):
@@ -36,48 +42,84 @@ class ChatCmd(object):
 
         return response.read()
 
-
-class Basics(ChatCmd):
-
-    def __init__(self, *args, **kwargs):
-        self.avail_cmds = {
-            'repeat': self.repeat,
-            'title': self.grab_title,
-            'join': self.chanjoin,
-            'quit': self.servquit,
-            'leave': self.chanpart,
-        }
-        super(Basics, self).__init__(self, *args, **kwargs)
-
-    def repeat(self, msg):
-        return [['say',self.channel, msg]] 
-
-    def grab_title(self, url):
-
-        if url[0:7] != "http://" and url[0:8] != "https://":
-            url = "http://" + url
-        response = self.grab_page(url)
-
-        re_string = "<title>(.*?)<\/title>"
-        p = re.compile(re_string, re.DOTALL | re.M)
-        m = p.search(response)
-        h = HTMLParser.HTMLParser()
-        title = m.groups()[0].strip()
-        title = title.replace("\n", "")
-        title = title.replace("\r", "")
-        title = title.replace("\t", "    ")
-        title = title.decode('utf-8')
-        title_s = "Title: %s" % h.unescape(title)
-        return [['say', self.channel, title_s]]
-
-    def chanjoin(self, channel):
-        if channel[0:1] == "#":
-            return [['join', channel]]
+    def url_matcher(self, message):
+        re_str = (""
+                  "(?:https?://|www\.)"
+                  "[\w\-\@;\/?:&=%\$_.+!*\x27(),~#]+"
+                  "[\w\-\@;\/?&=%\$_+!*\x27()~]"
+                  )
+        p = re.compile(re_str)
+        m = p.search(message)
+        if m:
+            return m.group()
         else:
-            return [['say', self.channel, 'Invalid channel name']]
+            return False
 
-    def chanpart(self, channel):
-        return [['part', channel]]
 
-    def servquit(self, msg):
-        return [['quit']]
+class ChatThread(ChatCmd, Thread):
+
+    daemon = True
+    blocking = True
+    threaded = True
+    _stop = Event()
+
+    def __init__(self, recvq, sendq, *args, **kwargs):
+        Thread.__init__(self)
+        self.avail_cmds = {self.string_gen():str}
+        self.recvq = recvq
+        self.sendq = sendq
+        super(ChatThread, self).__init__(self, *args, **kwargs)
+
+    def string_gen(self):
+        gen = ''.join(random.choice(string.ascii_lowercase) for i in range(12))
+        return gen
+
+    def run(self):
+        while not self.stopped():
+            try:
+                self.message = ""
+                # wait for new stuff to read/parse
+                # don't wait if blocking is false
+                if self.blocking:
+                    self.message = self.recvq.get().strip()
+                    self.recvq.task_done()
+                elif not self.recvq.empty():
+                    self.message = self.recvq.get().strip()
+                    self.recvq.task_done()
+                # parse response, formulate witty reply
+                # run this every loop, no matter what
+                reply = self.main_action()
+                # if we were clever enough, write reply to server
+                if reply:
+                    for cmd in reply:
+                        if cmd[0] == 'delay':
+                            # sleep here instead of main thread
+                            time.sleep(cmd[1])
+                        else:
+                            self.sendq.put(cmd)
+                # take it easy in this loop
+                time.sleep(0.1)
+            except Exception, e:
+                print traceback.format_exc()
+                print e
+        exit(0)
+
+    def main_action(self):
+        return False
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.isSet()
+
+    def parse_irc(self, message):
+        re_str = (""
+                  "^:(?P<nick>(\S*))!~(?P<user>(\S*))@(?P<host>(\S*)) "
+                  "(?P<command>([A-Z+])*) (?P<entity>([&#-_A-z0-9]+)?) "
+                  ":?(?P<message>(.+)?$)"
+                  )
+        p = re.compile(re_str)
+        m = p.match(message)
+
+        return m
