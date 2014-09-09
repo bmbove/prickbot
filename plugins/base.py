@@ -7,15 +7,22 @@ import random
 import traceback
 from threading import Thread, Event
 from Queue import Queue
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+
+Base = declarative_base()
 
 
 class ChatCmd(object):
     
-    name = "Command"
-    desc = "An IRC Bot sub-routine"
     avail_cmds = {}
 
     def __init__(self, *args, **kwargs):
+        self.name = "Command"
+        self.desc = "An IRC Bot sub-routine"
+
         if 'channel' in kwargs:
             self.channel = kwargs['channel']
         else:
@@ -25,6 +32,13 @@ class ChatCmd(object):
             self.bot_nick = kwargs['bot_nick']
         else:
             self.bot_nick = ''
+
+    def sqlinit(self):
+        self.engine = create_engine('sqlite:///database.db')
+        Base.metadata.create_all(self.engine)
+        Session = sessionmaker()
+        Session.configure(bind=self.engine)
+        self.session = Session()
 
     def run(self, nick, cmd, msg):
         self.cmd = cmd
@@ -61,9 +75,9 @@ class ChatThread(ChatCmd, Thread):
     daemon = True
     blocking = True
     threaded = True
-    _stop = Event()
 
     def __init__(self, recvq, sendq, *args, **kwargs):
+        self._stop = Event()
         Thread.__init__(self)
         self.avail_cmds = {self.string_gen():str}
         self.recvq = recvq

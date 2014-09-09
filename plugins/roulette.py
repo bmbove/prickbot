@@ -1,5 +1,7 @@
 import random
-from base import ChatCmd
+import json
+from base import ChatCmd, Base
+from sqlalchemy import Column, String, Text, Integer
 
 
 class Roulette(ChatCmd):
@@ -19,6 +21,21 @@ class Roulette(ChatCmd):
             }
         }
         super(Roulette, self).__init__(self, *args, **kwargs)
+
+        if self.channel != '':
+            self.sqlinit()
+
+    def sqlinit(self):
+        super(Roulette, self).sqlinit()
+        query = self.session.query(RouletteSQL)
+        query = query.filter_by(channel=self.channel).first()
+        if query == None:
+            stats_json = json.dumps(self.tracker)
+            r_stat = RouletteSQL(channel=self.channel, stats=stats_json)
+            self.session.add(r_stat)
+            self.session.commit()
+        else:
+            self.tracker = json.loads(query.stats)
 
     def reload(self):
         response = [] 
@@ -81,6 +98,12 @@ class Roulette(ChatCmd):
                 tracker['p_stats'][victim]['survivals'] += 1
 
         self.tracker = tracker
+        query = self.session.query(RouletteSQL)
+        query = query.filter_by(channel=self.channel).first()
+        query.stats = json.dumps(self.tracker)
+        r_stat = query
+        self.session.add(r_stat)
+        self.session.commit()
 
     def shoot(self, msg):
 
@@ -150,7 +173,6 @@ class Roulette(ChatCmd):
             ])
 
         tracker['c_cham'] += 1
-        self.tracker[self.channel] = tracker 
         self.stats_update(nick, victim, kill)
         return response
 
@@ -175,7 +197,7 @@ class Roulette(ChatCmd):
         line2 = "-".center(58, '-')
 
         for nick in stat_nicks:
-            stats = self.tracker[channel]['p_stats'][nick]
+            stats = self.tracker['p_stats'][nick]
             while len(nick) < 16:
                 nick += " "
             line3 = "%s%s%s%s%s%s" % (
@@ -195,3 +217,18 @@ class Roulette(ChatCmd):
             response.extend([['say', channel, line3]])
 
         return response
+
+
+class RouletteSQL(Base):
+
+    __tablename__ = 'roulette'
+
+    id = Column(Integer, primary_key=True)
+    channel = Column(String, unique=True)
+    stats = Column(Text)
+
+    def __repr__(self):
+        return "<RouletteSQL(channel='%s', stats='%s')>" % (
+            self.channel,
+            self.stats
+        )
