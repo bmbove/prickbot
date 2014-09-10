@@ -2,3 +2,4 @@
 .ropeproject
 env
 test*.py
+database.db
