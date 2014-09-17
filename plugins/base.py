@@ -41,10 +41,14 @@ class ChatCmd(object):
         self.session = Session()
 
     def run(self, nick, cmd, msg):
-        self.cmd = cmd
-        self.nick = nick
-        self.msg = msg
-        return self.avail_cmds[cmd](msg)
+        try:
+            self.cmd = cmd
+            self.nick = nick
+            self.msg = msg
+            return self.avail_cmds[cmd](msg)
+        except Exception, e:
+            return ['say', self.channel, str(e)]
+
 
     def grab_page(self, url):
 
