@@ -47,7 +47,7 @@ class ChatCmd(object):
             self.msg = msg
             return self.avail_cmds[cmd](msg)
         except Exception, e:
-            return ['say', self.channel, str(e)]
+            return [['say', self.channel, str(e)]]
 
 
     def grab_page(self, url):

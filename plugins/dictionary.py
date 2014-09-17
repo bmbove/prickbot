@@ -27,7 +27,7 @@ class Define(ChatCmd):
                 ['say', self.channel, def_list[1]],
             ]
         else:
-            return ['say', self.channel, define_str]
+            return [['say', self.channel, define_str]]
 
     def webster_lookup(self, word):
 
