@@ -8,6 +8,7 @@ class HangMan(ChatCmd):
         self.avail_cmds = {
             'hangman': self.reset,
             'guess': self.process_guess,
+            'g': self.process_guess,
             'solve': self.solve,
         }
         super(HangMan, self).__init__(self, *args, **kwargs)

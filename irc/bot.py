@@ -155,7 +155,7 @@ class IRCBot(IRCBase, Thread):
 
     def say(self, msg):
         entity = msg[1]
-        message = msg[2]
+        message = msg[2].replace("\n", " ")
         self.sock_write("PRIVMSG %s :%s" % (entity, message))
 
     def quit_irc(self, msg):
