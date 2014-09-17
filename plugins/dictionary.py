@@ -6,7 +6,7 @@ class Define(ChatCmd):
 
     def __init__(self, *args, **kwargs):
         self.avail_cmds = { 'define': self.definition } 
-        super(Define, self).__init__()
+        super(Define, self).__init__(self, *args, **kwargs)
 
     def definition(self, msg):
 
