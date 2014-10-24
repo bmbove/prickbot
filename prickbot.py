@@ -5,11 +5,11 @@ sys.path.append("./")
 
 from irc.bot import IRCBot
 
-channels = ["#pricknew"]
+channels = ["#edensucks cornfest"]
 bot = IRCBot('irc.freenode.net',
                 6667,
                 channels=channels,
-                bot_nick='prick_new'
+                bot_nick='prickbot'
                 )
 
 def main():
