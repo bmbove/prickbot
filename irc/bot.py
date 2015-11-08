@@ -21,7 +21,7 @@ class IRCBase(object):
 
     def parse_irc(self, message):
         re_str = (""
-                  "^:(?P<nick>(\S*))!~(?P<user>(\S*))@(?P<host>(\S*)) "
+                  "^:(?P<nick>(\S*))![~,b](?P<user>(\S*))@(?P<host>(\S*)) "
                   "(?P<command>([A-Z+])*) (?P<entity>([&#-_A-z0-9]+)?) "
                   ":?(?P<message>(.+)?$)"
                   )

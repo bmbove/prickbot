@@ -8,8 +8,9 @@ class IRCCmd(ChatCmd):
             'repeat': self.repeat,
             'join': self.chanjoin,
             'quit': self.servquit,
-            'leave': self.chanpart,
+            'part': self.chanpart,
             'say': self.say,
+            'raw': self.raw,
         }
         super(IRCCmd, self).__init__(self, *args, **kwargs)
 
@@ -39,3 +40,6 @@ class IRCCmd(ChatCmd):
 
     def servquit(self, msg):
         return [['quit']]
+
+    def raw(self, msg):
+        return [['raw', msg]]
