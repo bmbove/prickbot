@@ -6,7 +6,7 @@ sys.path.append("./")
 from irc.bot import IRCBot
 
 channels = ["#pricktest"]
-bot = IRCBot('irc.freenode.net',
+bot = IRCBot('localhost',
                 6667,
                 channels=channels,
                 bot_nick='prickbot'

@@ -11,23 +11,27 @@ class Define(ChatCmd):
     def definition(self, msg):
 
         def_list = self.webster_lookup(msg)
+        if def_list:
+            define_str = "%s - %s" % (msg, def_list)
+            return [['say', self.channel, define_str]]
 
-        if not def_list:
-            def_list = self.urban_dictionary_lookup(msg)
+        # not in webster... better check urban dictionary
+        cmd_ret = []
+
+        def_list = self.urban_dictionary_lookup(msg)
 
         if not def_list:
             define_str = "Coudln't define %s. Quit making words up." % msg
             return [['say', self.channel, define_str]]
 
-        define_str = "%s - %s" % (msg, def_list[0])
+        for def_item in def_list[0]:
+            cmd_ret.append(['say', self.channel, def_item])
 
         if def_list[1] != "":
-            return [
-                ['say', self.channel, define_str],
-                ['say', self.channel, def_list[1]],
-            ]
-        else:
-            return [['say', self.channel, define_str]]
+            for ex in def_list[1:]:
+                cmd_ret.append(['say', self.channel, ex])
+
+        return cmd_ret
 
     def webster_lookup(self, word):
 
@@ -64,6 +68,7 @@ class Define(ChatCmd):
         if m is not None:
             defined = re.sub('<[^<]+?>', '', m.groups()[0].strip())
             defined = h.unescape(defined)
+            defined = defined.split('\r')
         else:
             return False
 
@@ -75,4 +80,5 @@ class Define(ChatCmd):
             example = example.replace('\n', '  ').replace('\r', '  ')
             example = h.unescape(example)
 
+        print(defined, example)
         return [defined, example]
