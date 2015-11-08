@@ -12,7 +12,7 @@ class Define(ChatCmd):
 
         def_list = self.webster_lookup(msg)
         if def_list:
-            define_str = "%s - %s" % (msg, def_list)
+            define_str = "%s - %s" % (msg, def_list[0])
             return [['say', self.channel, define_str]]
 
         # not in webster... better check urban dictionary
