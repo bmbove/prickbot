@@ -22,6 +22,9 @@ class GrabTitle(ChatThread):
             url = "http://" + url
         response = self.grab_page(url)
 
+        if response is None:
+            return "Error fetching title"
+
         re_string = "<title>(.*?)<\/title>"
         p = re.compile(re_string, re.DOTALL | re.M)
         m = p.search(response)

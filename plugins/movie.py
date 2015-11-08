@@ -8,8 +8,11 @@ class Movie(ChatCmd):
         super(Movie, self).__init__(self, *args, **kwargs)
 
     def lookup(self, title):
-        url = "http://www.imdbapi.com/?t=%s" % title.replace(' ', '+')
+        url = "http://www.omdbapi.com/?t=%s" % title.replace(' ', '+')
         data = json.loads(self.grab_page(url))
+
+        if not data:
+            return ['say', self.channel, 'Error connecting to database']
 
         if data['Response'] == 'False':
             if 'Error' in data:

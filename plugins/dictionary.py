@@ -41,6 +41,10 @@ class Define(ChatCmd):
         url = "http://www.webster-dictionary.org/definition/"
         url = url + word.replace(' ', '+')
         response = self.grab_page(url)
+
+        if response is None:
+            return False
+
         re_string = "<td valign=top><b>1.<\/b><\/td><td>(.*?)<\/td>"
         p = re.compile(re_string, re.DOTALL | re.M)
         m = p.search(response)
@@ -61,6 +65,8 @@ class Define(ChatCmd):
         url = "http://www.urbandictionary.com/define.php?term="
         url = url + word.replace(' ', '+')
         response = self.grab_page(url)
+        if response is None:
+            return False
 
         re_string = "<div class=\'meaning\'>(.*?)<\/div>"
         p = re.compile(re_string, re.DOTALL | re.M)

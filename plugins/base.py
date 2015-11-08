@@ -56,7 +56,10 @@ class ChatCmd(object):
             " Gecko/20100101 Firefox/31.0")
         headers = { 'User-Agent' : ua }
         req = urllib2.Request(url, None, headers)
-        response = urllib2.urlopen(req)
+        try:
+            response = urllib2.urlopen(req)
+        except:
+            return None 
 
         return response.read()
 
